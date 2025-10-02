@@ -3,13 +3,54 @@
     Layout = null;
 }
 
-<!DOCTYPE html>
+<link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@8.0.0/dist/browser/signalr.min.js"></script>
 
-<html>
-<head>
-    <meta name="viewport" content="width=device-width" />
-    <title>Index</title>
-</head>
-<body>
-</body>
-</html>
+<div class="container">
+<br /><br />
+<h3>Anlık Sipariş Listesi</h3>
+
+<table class="table table-bordered">
+    <tr>
+        <th>Sipariş Id</th>
+        <th>Müşteri Adı</th>
+        <th>Müşteri Soyadı</th>
+        <th>Ürün Adı</th>
+        <th>Ürün Fiyat</th>
+    </tr>
+    <tbody id="orderTableBody"></tbody>
+</table>
+    
+
+<script>
+
+    const connection=new signalR.HubConnectionBuilder().withUrl("/storeHub").build();
+
+    connection.on("ReceiveOrders",function(orders){
+        const tbody=document.getElementById("orderTableBody");
+        tbody.innerHTML="";
+
+        orders.forEach(o=>{
+            let row=`<tr>
+                     <td>${o.orderId}</td>
+                     <td>${o.customerName}</td>
+                     <td>${o.customerSurname}</td>
+                     <td>${o.productName}</td>
+                     <td>${o.price}</td>
+                     </tr>`;
+            tbody.innerHTML+=row;
+
+        });
+    });
+
+    connection.start().then(function(){
+        connection.invoke("GetOrders");
+
+        setInterval(()=>{
+            connection.invoke("GetOrders");
+        },1000);
+    }).catch(err =>console.error(err));
+
+</script>
+
+</div>

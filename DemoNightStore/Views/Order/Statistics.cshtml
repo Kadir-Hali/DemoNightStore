@@ -1,0 +1,55 @@
+﻿@{
+    Layout = null;
+}
+
+<script src="https://cdn.jsdelivr.net/npm/@@microsoft/signalr@8.0.0/dist/browser/signalr.min.js"></script>
+<link href="~/lib/bootstrap/dist/css/bootstrap.min.css" rel="stylesheet" />
+
+<div class="container mt-4">
+    <h3 class="mb-4">📊 Anlık Sipariş İstatistikleri</h3>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card text-white bg-primary mb-3">
+                <div class="card-header">Toplam Sipariş Sayısı</div>
+                <div class="card-body">
+                    <h4 id="orderCount">0</h4>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card text-white bg-success mb-3">
+                <div class="card-header">Fiyatı 1000’den Büyük Siparişler</div>
+                <div class="card-body">
+                    <h4 id="orderCountByPrice">0</h4>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const connection = new signalR.HubConnectionBuilder().withUrl("/storeHub").build();
+
+    // Toplam sipariş sayısını dinle
+    connection.on("ReceiveOrderCount", function (count) {
+        document.getElementById("orderCount").innerText = count;
+    });
+
+    // 1000’den büyük siparişleri dinle
+    connection.on("ReceiveOrderCountByPrice", function (count) {
+        document.getElementById("orderCountByPrice").innerText = count;
+    });
+
+    connection.start().then(function () {
+        // İlk çağırma
+        connection.invoke("Statistics");
+
+        // Her 3 saniyede bir güncelle
+        setInterval(() => {
+            connection.invoke("Statistics");
+        }, 3000);
+
+    }).catch(err => console.error(err));
+</script>
